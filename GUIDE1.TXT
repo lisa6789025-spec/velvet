@@ -1,0 +1,43 @@
+VERCEL ENVIRONMENT VARIABLES — KEY / VALUE TABLE
+Paste each VALUE exactly (no quotes). Then redeploy.
+
+=== ALREADY SET (don't re-add) ===
+NEXT_PUBLIC_SUPABASE_URL
+  your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+  your-anon-key
+SUPABASE_SERVICE_ROLE_KEY
+  your-service-role-key
+GROQ_API_KEY
+  your-groq-key
+PAYPAL_CLIENT_ID
+  your-client-id
+PAYPAL_CLIENT_SECRET
+  your-client-secret
+NEXT_PUBLIC_PAYPAL_CLIENT_ID
+  your-public-client-id
+PAYPAL_ENV
+  sandbox
+
+NOTE: AI_DETECTOR_API_KEY / AI_DETECTOR_BASE_URL are NO LONGER USED.
+The aidetectorapi.com endpoint was never real (returns 404). Remove them.
+
+=== OPTIONAL (code already has these defaults) ===
+GROQ_MODEL
+  llama-3.3-70b-versatile
+GROQ_FALLBACK_MODELS
+  openai/gpt-oss-120b,openai/gpt-oss-20b,llama-3.1-8b-instant,qwen/qwen3.6-27b,meta-llama/llama-4-scout-17b-16e-instruct
+OPENROUTER_MODELS
+  meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat:free,qwen/qwen-2.5-72b-instruct:free,mistralai/mistral-small-24b-instruct:free,google/gemini-2.5-flash:free
+GEMINI_MODEL
+  gemini-3.6-flash
+
+=== MUST ADD NOW (get each key, then add) ===
+OPENROUTER_API_KEY
+  (get at https://openrouter.ai/keys)
+GEMINI_API_KEY
+  (get at https://aistudio.google.com -> Get API key; also used by the
+   Gemini AI-detector fallback, no second key needed)
+WINSTON_API_KEY
+  (get at https://dev.gowinston.ai -> API / Tokens -> create token.
+   Free: 2,000 credits, ~1 credit per word.)
