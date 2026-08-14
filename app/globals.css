@@ -271,8 +271,7 @@ h1 em { font-style: italic; color: var(--gold); }
 }
 .dash-left label:first-child { margin-top: 0; }
 .dash-left textarea {
-  flex: 1;
-  min-height: 220px;
+  min-height: 147px;
 }
 .dash-center {
   display: flex;
