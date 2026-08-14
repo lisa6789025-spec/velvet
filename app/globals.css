@@ -176,6 +176,14 @@ h1 em { font-style: italic; color: var(--gold); }
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.note .stamp:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(209, 122, 143, 0.45);
 }
 .note .stamp svg { width: 16px; height: 16px; }
 
@@ -243,6 +251,88 @@ h1 em { font-style: italic; color: var(--gold); }
   color: var(--ivory-dim);
   text-align: right;
   margin-top: 6px;
+}
+
+/* ---- Split dashboard ---- */
+.dash-split {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 30px;
+  align-items: stretch;
+  margin-top: 30px;
+}
+@media (max-width: 900px) {
+  .dash-split { grid-template-columns: 1fr; }
+}
+.dash-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dash-left label:first-child { margin-top: 0; }
+.dash-left textarea {
+  flex: 1;
+  min-height: 140px;
+}
+.dash-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 6px;
+}
+.center-btn {
+  font-size: 16px;
+  padding: 18px 44px;
+  box-shadow: 0 8px 28px rgba(201, 162, 75, 0.28);
+  white-space: nowrap;
+}
+.center-remaining {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--ivory-dim);
+  text-align: center;
+}
+.dash-right { min-width: 0; }
+.dash-placeholder {
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 40px 24px;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ivory-dim);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.right-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+/* ---- Rainbow speedometer ---- */
+.speedo { margin-top: 22px; text-align: center; }
+.speedo svg { width: 200px; height: 140px; display: block; margin: 0 auto; }
+.speedo-num {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 26px;
+  font-weight: 500;
+  fill: var(--ivory);
+}
+.speedo-cap {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory-dim);
+  margin-top: 4px;
 }
 
 .reply-count {

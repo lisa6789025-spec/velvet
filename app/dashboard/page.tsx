@@ -8,6 +8,93 @@ import PayPalButton from "@/app/components/PayPalButton";
 
 type AuthMode = "login" | "signup";
 
+function Speedo({
+  score,
+  label,
+  confidence,
+}: {
+  score: number | null;
+  label: string | null;
+  confidence: string | null;
+}) {
+  const target = score ?? 0;
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const dur = 900;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(target * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+
+  const pct = Math.max(0, Math.min(100, val));
+  const r = 80;
+  const cx = 100;
+  const cy = 102;
+  const circ = Math.PI * r;
+  const filled = (pct / 100) * circ;
+  const needleRot = -90 + (pct / 100) * 180;
+
+  return (
+    <div className="speedo">
+      <svg viewBox="0 0 200 140" role="img" aria-label="ai score gauge">
+        <defs>
+          <linearGradient id="speedo-rainbow" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="18%" stopColor="#22c55e" />
+            <stop offset="38%" stopColor="#84cc16" />
+            <stop offset="58%" stopColor="#eab308" />
+            <stop offset="78%" stopColor="#f97316" />
+            <stop offset="100%" stopColor="#ef4444" />
+          </linearGradient>
+        </defs>
+        <path
+          d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+          fill="none"
+          stroke="rgba(246,236,218,0.10)"
+          strokeWidth="15"
+          strokeLinecap="round"
+        />
+        <path
+          d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+          fill="none"
+          stroke="url(#speedo-rainbow)"
+          strokeWidth="15"
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${circ}`}
+        />
+        <g transform={`rotate(${needleRot} ${cx} ${cy})`}>
+          <line
+            x1={cx}
+            y1={cy}
+            x2={cx}
+            y2={cy - r + 20}
+            stroke="#f6ecda"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </g>
+        <circle cx={cx} cy={cy} r="6" fill="#f6ecda" />
+        <text x={cx} y={cy + 34} textAnchor="middle" className="speedo-num">
+          {Math.round(pct)}%
+        </text>
+      </svg>
+      <div className="speedo-cap">
+        {label
+          ? `${label.replace(/-/g, " ")}${confidence ? " · " + confidence : ""}`
+          : "ai score"}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const supabase = createBrowserSupabase();
 
@@ -41,7 +128,6 @@ export default function Dashboard() {
   const [aiConfidence, setAiConfidence] = useState<string | null>(null);
   const [aiLog, setAiLog] = useState<string | null>(null);
   const [aiChecking, setAiChecking] = useState(false);
-  const [logCopied, setLogCopied] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,15 +240,25 @@ export default function Dashboard() {
       setError("Paste at least one message to work from.");
       return;
     }
-    setReply(null);
-    setAiEnabled(false);
-    setAiScore(null);
+    if (!reply) {
+      setAiEnabled(false);
+      setAiScore(null);
+      setAiLabel(null);
+      setAiConfidence(null);
+    }
     generateReply();
   }
 
-  function handleRegenerate() {
-    if (loading || !reply) return;
-    generateReply();
+  function resetReply() {
+    setReply(null);
+    setCopied(false);
+    setLiked(false);
+    setAiEnabled(false);
+    setAiScore(null);
+    setAiLabel(null);
+    setAiConfidence(null);
+    setAiLog(null);
+    setError(null);
   }
 
   function handlePaid(planId: PlanId) {
@@ -206,17 +302,6 @@ export default function Dashboard() {
       setError("Network error — try again.");
     } finally {
       setAiChecking(false);
-    }
-  }
-
-  async function copyLog() {
-    if (!aiLog) return;
-    try {
-      await navigator.clipboard.writeText(aiLog);
-      setLogCopied(true);
-      setTimeout(() => setLogCopied(false), 2000);
-    } catch {
-      setError("Couldn't copy — select the log manually.");
     }
   }
 
@@ -305,124 +390,95 @@ export default function Dashboard() {
       <h1 style={{ fontSize: 34 }}>What did they say?</h1>
       <p className="lede">Paste the conversation so far. The more recent messages, the sharper the suggestion.</p>
 
-      <div className="two-col">
-        <div>
+      <div className="dash-split">
+        <div className="dash-left">
           <label>your last message <span className="opt">optional</span></label>
           <textarea
             placeholder="What you said..."
             value={yourMessage}
-            onChange={(e) => setYourMessage(e.target.value)}
+            onChange={(e) => { setYourMessage(e.target.value); resetReply(); }}
           />
           <div className="char-count">{yourMessage.length} chars</div>
-        </div>
-        <div>
+
           <label>their reply <span className="opt">optional</span></label>
           <textarea
             placeholder="What they said back..."
             value={theirMessage}
-            onChange={(e) => setTheirMessage(e.target.value)}
+            onChange={(e) => { setTheirMessage(e.target.value); resetReply(); }}
           />
           <div className="char-count">{theirMessage.length} chars</div>
         </div>
-      </div>
 
-      <div style={{ marginTop: 22 }}>
-        <button className="btn" onClick={handleGenerate} disabled={loading}>
-          {loading ? "writing…" : "Suggest a reply"}
-        </button>
-      </div>
-
-      {error && <p className="error-text">{error}</p>}
-
-      {reply && (
-        <div className="fade-up" style={{ marginTop: 30 }}>
-          <div className="note">
-            <div className="stamp">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#f6ecda" strokeWidth="2">
-                <path d="M4 6l8 6 8-6M4 6h16v12H4V6z" />
-              </svg>
-            </div>
-            {reply}
-          </div>
-          <div className="reply-gauges">
-            <div className={"reply-count" + (reply.length >= 70 ? "" : " short")}>
-              {reply.length} chars
-              <span className="reply-count-min">
-                {reply.length >= 70 ? "· min 70 met" : "· below 70 minimum"}
-              </span>
-            </div>
-            {aiEnabled ? (
-              <div className="ai-score">
-                {aiScore !== null ? (
-                  <div className="ai-score-row">
-                    <span className="ai-score-label">ai score</span>
-                    <div className="ai-meter">
-                      <div
-                        className="ai-meter-fill"
-                        style={{
-                          width: `${aiScore}%`,
-                          background:
-                            aiScore >= 70
-                              ? "var(--rose)"
-                              : aiScore >= 40
-                                ? "var(--ivory-dim)"
-                                : "var(--gold)",
-                        }}
-                      />
-                    </div>
-                    <span
-                      className={
-                        "ai-score-value" +
-                        (aiScore >= 70 ? " high" : aiScore >= 40 ? " mid" : " low")
-                      }
-                    >
-                      {aiScore}%
-                    </span>
-                    <span className="ai-score-label">
-                      {aiLabel?.replace(/-/g, " ")} · {aiConfidence}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="ai-score dim">ai scan unavailable right now</div>
-                )}
-                <div className="ai-actions">
-                  <button className="link-btn" onClick={recheckAi} disabled={aiChecking}>
-                    {aiChecking ? "checking…" : "recheck ai"}
-                  </button>
-                  {aiLog && (
-                    <button className="link-btn" onClick={copyLog}>
-                      {logCopied ? "log copied ✓" : "copy log"}
-                    </button>
-                  )}
-                </div>
-                {aiLog && (
-                  <div className="ai-log">
-                    <span className="ai-log-text">{aiLog}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="ai-score dim">ai score · unlimited plan only</div>
-            )}
-          </div>
-          <div className="meta-row">
-            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <button className="link-btn" onClick={handleCopy}>
-                {copied ? "copied ✓" : "copy"}
-              </button>
-              {!liked && (
-                <button className="link-btn" onClick={handleRegenerate} disabled={loading}>
-                  {loading ? "writing…" : "regenerate"}
-                </button>
-              )}
-              <button className="link-btn" onClick={() => setLiked((v) => !v)}>
-                {liked ? "liked ✓" : "like"}
-              </button>
-            </div>
-            {remaining !== null && <span>{remaining} left today</span>}
-          </div>
+        <div className="dash-center">
+          <button className="btn center-btn" onClick={handleGenerate} disabled={loading}>
+            {loading ? "writing…" : reply ? "Regenerate" : "Reply"}
+          </button>
+          {remaining !== null && (
+            <div className="center-remaining">{remaining} left today</div>
+          )}
         </div>
-      )}
+
+        <div className="dash-right">
+          {error && <p className="error-text">{error}</p>}
+
+          {reply ? (
+            <div className="fade-up">
+              <div className="note">
+                <button className="stamp" onClick={handleCopy} aria-label="copy reply" title="copy reply">
+                  {copied ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#f6ecda" strokeWidth="2">
+                      <path d="M4 12l5 5L20 6" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#f6ecda" strokeWidth="2">
+                      <rect x="9" y="9" width="11" height="11" rx="2" />
+                      <path d="M5 15V5a2 2 0 012-2h10" />
+                    </svg>
+                  )}
+                </button>
+                {reply}
+              </div>
+
+              <div className={"reply-count" + (reply.length >= 70 ? "" : " short")}>
+                {reply.length} chars
+                <span className="reply-count-min">
+                  {reply.length >= 70 ? "· min 70 met" : "· below 70 minimum"}
+                </span>
+              </div>
+
+              <Speedo score={aiScore} label={aiLabel} confidence={aiConfidence} />
+
+              {!aiEnabled && aiScore === null && (
+                <div className="ai-score dim" style={{ marginTop: 10, justifyContent: "center" }}>
+                  ai score · unlimited plan only
+                </div>
+              )}
+
+              <div className="right-actions">
+                <button className="link-btn" onClick={handleCopy}>
+                  {copied ? "copied ✓" : "copy"}
+                </button>
+                <button className="link-btn" onClick={() => setLiked((v) => !v)}>
+                  {liked ? "liked ✓" : "like"}
+                </button>
+                <button className="link-btn" onClick={recheckAi} disabled={aiChecking}>
+                  {aiChecking ? "checking…" : "recheck ai"}
+                </button>
+              </div>
+
+              {aiLog && (
+                <div className="ai-log" style={{ marginTop: 12 }}>
+                  <span className="ai-log-text">{aiLog}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="dash-placeholder">
+              Your reply will appear here once you hit Reply.
+            </div>
+          )}
+        </div>
+      </div>
 
       <hr className="divider" />
 
