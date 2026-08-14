@@ -126,7 +126,6 @@ export default function Dashboard() {
   const [aiScore, setAiScore] = useState<number | null>(null);
   const [aiLabel, setAiLabel] = useState<string | null>(null);
   const [aiConfidence, setAiConfidence] = useState<string | null>(null);
-  const [aiLog, setAiLog] = useState<string | null>(null);
   const [aiChecking, setAiChecking] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -227,7 +226,6 @@ export default function Dashboard() {
       setAiScore(data.aiScore ?? null);
       setAiLabel(data.aiLabel ?? null);
       setAiConfidence(data.aiConfidence ?? null);
-      setAiLog(data.detectLog ?? null);
     } catch {
       setError("Network error — try again.");
     } finally {
@@ -257,7 +255,6 @@ export default function Dashboard() {
     setAiScore(null);
     setAiLabel(null);
     setAiConfidence(null);
-    setAiLog(null);
     setError(null);
   }
 
@@ -297,7 +294,6 @@ export default function Dashboard() {
       setAiScore(data.aiScore ?? null);
       setAiLabel(data.aiLabel ?? null);
       setAiConfidence(data.aiConfidence ?? null);
-      setAiLog(data.log ?? null);
     } catch {
       setError("Network error — try again.");
     } finally {
@@ -465,12 +461,6 @@ export default function Dashboard() {
                   {aiChecking ? "checking…" : "recheck ai"}
                 </button>
               </div>
-
-              {aiLog && (
-                <div className="ai-log" style={{ marginTop: 12 }}>
-                  <span className="ai-log-text">{aiLog}</span>
-                </div>
-              )}
             </div>
           ) : (
             <div className="dash-placeholder">

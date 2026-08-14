@@ -31,7 +31,7 @@ body {
   }
 }
 
-.wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+.wrap { max-width: 66.66vw; margin: 0 auto; padding: 0 24px; }
 
 /* ---- Site nav ---- */
 .site-nav {
@@ -272,7 +272,7 @@ h1 em { font-style: italic; color: var(--gold); }
 .dash-left label:first-child { margin-top: 0; }
 .dash-left textarea {
   flex: 1;
-  min-height: 140px;
+  min-height: 220px;
 }
 .dash-center {
   display: flex;
