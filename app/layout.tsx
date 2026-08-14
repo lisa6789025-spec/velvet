@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <header className="site-nav">
           <nav className="nav-inner wrap">
-            <a href="/" className="brand">Velvet</a>
+            <a href="/" className="brand" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 19L3 7l4.5 4L12 3l4.5 8L21 7l-1 12z"/><path d="M4 21h16"/></svg>Velvet</a>
             <div className="nav-links">
               <a href="/#how">How it works</a>
               <a href="/#features">Why</a>
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <footer className="site-footer">
           <div className="wrap footer-inner">
-            <span className="footer-brand">Velvet</span>
+            <span className="footer-brand" style={{ display: "inline-flex", alignItems: "center", gap: 7 }}><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 19L3 7l4.5 4L12 3l4.5 8L21 7l-1 12z"/><path d="M4 21h16"/></svg>Velvet</span>
             <span className="footer-tag">written between the lines, sent as your own</span>
             <div className="footer-links">
               <a href="/#how">How it works</a>
