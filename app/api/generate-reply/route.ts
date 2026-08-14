@@ -16,6 +16,12 @@ const SYSTEM_PROMPT = fs.readFileSync(
 
 const MIN_REPLY_CHARS = 70;
 
+// Cap every provider call so one slow or rate-limited model can't stall the
+// request for minutes. Groq's free tier sends a Retry-After header on 429s
+// and the OpenAI SDK honors it by sleeping up to 60s per retry — that alone
+// can make a single reply take ~1 minute.
+const PROVIDER_TIMEOUT_MS = 15000;
+
 // Free-tier limits are per-model/per-provider, so when one quota bucket is
 // exhausted we keep serving by trying the next model and provider.
 const DEFAULT_GROQ_FALLBACKS = [
@@ -43,7 +49,13 @@ function envList(name: string, fallback: string[]): string[] {
 }
 
 function groqModels(): string[] {
-  return envList("GROQ_FALLBACK_MODELS", DEFAULT_GROQ_FALLBACKS);
+  const fallbacks = envList("GROQ_FALLBACK_MODELS", DEFAULT_GROQ_FALLBACKS);
+  // GROQ_MODEL is the explicitly-configured primary — try it first, then the
+  // fallback list. Each provider/model is a fresh request, so if it 429s or
+  // times out we fail over to the next model immediately.
+  const primary = (process.env.GROQ_MODEL || "").trim();
+  if (!primary) return fallbacks;
+  return [primary, ...fallbacks.filter((m) => m !== primary)];
 }
 
 function openRouterModels(): string[] {
@@ -104,6 +116,8 @@ function buildProviders(): Provider[] {
     const groq = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
       baseURL: "https://api.groq.com/openai/v1",
+      timeout: PROVIDER_TIMEOUT_MS,
+      maxRetries: 0,
     });
     providers.push({
       name: "groq",
@@ -127,6 +141,8 @@ function buildProviders(): Provider[] {
     const openrouter = new OpenAI({
       apiKey: process.env.OPENROUTER_API_KEY,
       baseURL: "https://openrouter.ai/api/v1",
+      timeout: PROVIDER_TIMEOUT_MS,
+      maxRetries: 0,
     });
     providers.push({
       name: "openrouter",
@@ -152,34 +168,41 @@ function buildProviders(): Provider[] {
       name: "gemini",
       models: [geminiModel],
       generate: async (model, userContent) => {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": process.env.GEMINI_API_KEY!,
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [{ text: `${SYSTEM_PROMPT}\n\n${userContent}` }],
-                },
-              ],
-              generationConfig: { maxOutputTokens: 384, temperature: 0.9 },
-            }),
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": process.env.GEMINI_API_KEY!,
+              },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: "user",
+                    parts: [{ text: `${SYSTEM_PROMPT}\n\n${userContent}` }],
+                  },
+                ],
+                generationConfig: { maxOutputTokens: 384, temperature: 0.9 },
+              }),
+              signal: controller.signal,
+            }
+          );
+          if (!res.ok) {
+            throw new Error(`gemini ${res.status}: ${await res.text()}`);
           }
-        );
-        if (!res.ok) {
-          throw new Error(`gemini ${res.status}: ${await res.text()}`);
+          const data = await res.json();
+          return (
+            data?.candidates?.[0]?.content?.parts
+              ?.map((p: { text?: string }) => p.text ?? "")
+              .join("") ?? ""
+          );
+        } finally {
+          clearTimeout(timer);
         }
-        const data = await res.json();
-        return (
-          data?.candidates?.[0]?.content?.parts
-            ?.map((p: { text?: string }) => p.text ?? "")
-            .join("") ?? ""
-        );
       },
     });
   }
