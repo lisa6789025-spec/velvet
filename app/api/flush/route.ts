@@ -236,6 +236,8 @@ function buildTasks(userContent: string): Promise<Answer>[] {
   return tasks;
 }
 
+export const maxDuration = 60;
+
 export async function GET() {
   return NextResponse.json({ ok: true, app: APP_NAME, online: true });
 }
