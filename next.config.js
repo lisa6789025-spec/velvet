@@ -3,6 +3,7 @@ const nextConfig = {
   experimental: {
     outputFileTracingIncludes: {
       "/api/generate-reply": ["./prompts/**/*"],
+      "/api/flush": ["./prompts/**/*"],
     },
   },
 };
