@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
@@ -88,6 +88,8 @@ function cleanReply(raw: string): string {
   const notesIdx = text.search(/\bNOTES\b/i);
   if (notesIdx !== -1) text = text.slice(0, notesIdx);
   text = text.replace(/^["'“”]+|["'“”]+$/g, "").trim();
+  const refusalRe = /^(i'?m sorry|sorry)[,.]?\s*(but )?(i (can'?t|cannot|am not (able|going)|won'?t|will not)|but i (can'?t|cannot|am not able))|i (can'?t|cannot) (help|assist|comply|do that|provide|fulfill|engage)|as an ai|i'?m (unable|not able) to|i (don'?t|do not) (think i )?(can|should|will)|i (must|have to) (decline|refuse|pass)|that'?s (something )?i (can'?t|cannot|am not (able|allowed|permitted))/i;
+  if (refusalRe.test(text)) return "";
   return text;
 }
 
@@ -139,7 +141,7 @@ async function fetchGemini(userContent: string, model: string): Promise<string> 
               parts: [{ text: `${SYSTEM_PROMPT}\n\n${userContent}` }],
             },
           ],
-          generationConfig: { maxOutputTokens: 384, temperature: 0.9 },
+          generationConfig: { maxOutputTokens: 512, temperature: 0.9 },
         }),
         signal: controller.signal,
       }
@@ -177,7 +179,7 @@ function buildTasks(userContent: string): Promise<Answer>[] {
               { role: "system", content: SYSTEM_PROMPT },
               { role: "user", content: userContent },
             ],
-            max_tokens: 384,
+            max_tokens: 512,
             temperature: 0.9,
           })
           .then(
@@ -208,7 +210,7 @@ function buildTasks(userContent: string): Promise<Answer>[] {
               { role: "system", content: SYSTEM_PROMPT },
               { role: "user", content: userContent },
             ],
-            max_tokens: 384,
+            max_tokens: 512,
             temperature: 0.9,
           })
           .then(
