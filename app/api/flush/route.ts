@@ -141,7 +141,7 @@ async function fetchGemini(userContent: string, model: string): Promise<string> 
               parts: [{ text: `${SYSTEM_PROMPT}\n\n${userContent}` }],
             },
           ],
-          generationConfig: { maxOutputTokens: 512, temperature: 0.9 },
+          generationConfig: { maxOutputTokens: 1024, temperature: 0.9 },
         }),
         signal: controller.signal,
       }
@@ -179,7 +179,7 @@ function buildTasks(userContent: string): Promise<Answer>[] {
               { role: "system", content: SYSTEM_PROMPT },
               { role: "user", content: userContent },
             ],
-            max_tokens: 512,
+            max_tokens: 1024,
             temperature: 0.9,
           })
           .then(
@@ -210,7 +210,7 @@ function buildTasks(userContent: string): Promise<Answer>[] {
               { role: "system", content: SYSTEM_PROMPT },
               { role: "user", content: userContent },
             ],
-            max_tokens: 512,
+            max_tokens: 1024,
             temperature: 0.9,
           })
           .then(

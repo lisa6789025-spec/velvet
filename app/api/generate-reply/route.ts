@@ -131,7 +131,7 @@ function buildProviders(): Provider[] {
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: userContent },
           ],
-          max_tokens: 512,
+          max_tokens: 1024,
           temperature: 0.9,
         });
         return completion.choices[0]?.message?.content ?? "";
@@ -156,7 +156,7 @@ function buildProviders(): Provider[] {
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: userContent },
           ],
-          max_tokens: 512,
+          max_tokens: 1024,
           temperature: 0.9,
         });
         return completion.choices[0]?.message?.content ?? "";
@@ -188,7 +188,7 @@ function buildProviders(): Provider[] {
                     parts: [{ text: `${SYSTEM_PROMPT}\n\n${userContent}` }],
                   },
                 ],
-                generationConfig: { maxOutputTokens: 512, temperature: 0.9 },
+                generationConfig: { maxOutputTokens: 1024, temperature: 0.9 },
               }),
               signal: controller.signal,
             }
